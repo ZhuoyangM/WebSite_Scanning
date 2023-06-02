@@ -1,4 +1,3 @@
-import logging
 import requests
 from urllib.parse import urlparse
 from argparse import ArgumentParser
@@ -53,11 +52,11 @@ def createSearchList(url):
 # Parse a single input url
 def parseURL(url):
     res = ''
-    url = url.strip().lower()
-    if url.startswith('http://') or url.startswith('https://'):
-        res = url
+    tmp = url.strip().lower()
+    if tmp.startswith('http://') or tmp.startswith('https://'):
+        res = tmp
     else:
-        res = 'http://' + url
+        res = 'http://' + tmp
     
     return res
 
