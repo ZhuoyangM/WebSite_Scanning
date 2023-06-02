@@ -19,6 +19,14 @@ class testBackUpScan(unittest.TestCase):
 
 
     def test_parseURLFile(self):
-        pass
+        fName = 'testURLFile.txt'
+        expected = ['http://baidu.com', 'https://qq.com', 'https://mysite.com', 'http://example.com', 'https://blabla.com']
+        actual = parseURLFile(fName)
+        fName2 = 'notExist.txt'
+        self.assertEquals(actual, expected)
+        self.assertEquals(parseURLFile(fName2), None)
+        
 
 
+if __name__ =='__main__':
+    unittest.main()

@@ -6,6 +6,8 @@ from hurry.filesize import size
 from concurrent.futures import ThreadPoolExecutor
 
 
+requests.packages.urllib3.disable_warnings()
+
 # Create a searchList
 def createSearchList(url):
     backUpDic = []
@@ -76,8 +78,9 @@ def parseURLFile(fName):
     
 
 # Search for backup files for a given website
-def searchBackUp(url):
-    r = requests.get(url=url, headers=Headers.generate(), 
+def searchBackUp(url, res_file):
+    header = Headers(headers=False)
+    r = requests.get(url=url, headers=header.generate(), 
                      allow_redirects=False, stream=True, verify=False)
     if r.status_code == 200:
         sizeInBytes = int(r.headers.get('Content-Length'))
@@ -86,44 +89,42 @@ def searchBackUp(url):
             with open(res_file, 'a') as f:
                 f.write(str(url) + '  ' + 'size:' + str(fileSize) + '\n')
             print('[SUCCESS] {}'.format(url))
-        else: # Empty file can't be a backup file
-            print('[EMPTY] {}'.format(url))
-
+        else: # uknown size
+            print('[UNKNOWN] {}'.format(url))
     else:
-        print('[NOT FOUND] {}'.format(url))
+        print('[FAIL] {}'.format(url))
 
 
 # Scan the website using multithreads
-def scan(url):
-    p = ThreadPoolExecutor(max_workers=20)
+def scan(url, res_file):
+    p = ThreadPoolExecutor(max_workers=100)
     for target in searchList:
-        p.submit(searchBackUp, target)
+        p.submit(searchBackUp, target, res_file)
     p.shutdown()
 
 
-if __name__ == 'main':
+# Main function
+if __name__ == '__main__':
     usageEx = 'python3 backupscan.py -u https://www.example.com -o result.txt'
     parser = ArgumentParser(add_help=True, usage=usageEx, description='A website backup file leak scan tool.')
     parser.add_argument('-o', dest='res_file', type=str, help='An output file to store the searching result',required=True)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-u', dest='url', action='store_true', type=str, help='A single website to be searched')
-    group.add_argument('-f', dest='url_file', action='store_true', type=str, help='A file of websites to be searched')
+    group.add_argument('-u', dest='url', action='store', help='A single website to be searched')
+    group.add_argument('-f', dest='url_file', action='store', help='A file of websites to be searched')
     args = parser.parse_args()
     
-    global res_file
     res_file = args.res_file
-
     try:
         if args.url:
             url = parseURL(args.url)
             searchList = createSearchList(url)
-            scan(url)
+            scan(url,res_file)
         elif args.url_file:
             url_file = args.url_file
             urlList = parseURLFile(url_file)
             for url in urlList:
                 searchList = createSearchList(url)
-                scan(url)
+                scan(url, res_file)
     except Exception as e:
         print(e)
 
